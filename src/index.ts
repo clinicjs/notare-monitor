@@ -117,6 +117,7 @@ export class Monitor extends Readable {
 
     const delay =
         Math.floor(1000 / (this.#options.hz || kDefaultMonitorOptions.hz));
+    this._sample();
     this.#timer = setInterval(() => this._sample(), delay);
     if (monitorEventLoopDelay !== undefined) {
       this.#elmonitor = monitorEventLoopDelay({ resolution: delay });
@@ -136,7 +137,7 @@ export class Monitor extends Readable {
     const now = process.hrtime.bigint();
     const elapsed = parseInt((now - this.#lastTS).toString()) / 1e6;
     const usage = this.#lastCPUUsage = process.cpuUsage(this.#lastCPUUsage);
-    const total = (usage.user + usage.system) / 1000;
+    const total = (usage.user + usage.system) / 1e6;
     this.#lastTS = now;
     return total / elapsed;
   }

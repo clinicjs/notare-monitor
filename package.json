@@ -1,6 +1,6 @@
 {
   "name": "notare-monitor",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Node.js Performance Observer - Monitor module",
   "keywords": [
     "performance",
@@ -26,14 +26,14 @@
   "devDependencies": {
     "@types/blessed": "^0.1.17",
     "@types/debug": "^4.1.5",
-    "@types/node": "^13.13.5",
-    "@types/readable-stream": "^2.3.5",
-    "@typescript-eslint/eslint-plugin": "^2.31.0",
-    "@typescript-eslint/parser": "^2.31.0",
+    "@types/node": "^14.0.6",
+    "@types/readable-stream": "^2.3.6",
+    "@typescript-eslint/eslint-plugin": "^3.1.0",
+    "@typescript-eslint/parser": "^3.1.0",
     "gen-esm-wrapper": "^1.0.6",
     "snazzy": "^8.0.0",
     "standardx": "^5.0.0",
-    "typescript": "^3.8.3"
+    "typescript": "^3.9.3"
   },
   "eslintConfig": {
     "rules": {

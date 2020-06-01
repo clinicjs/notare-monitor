@@ -130,7 +130,7 @@ export class Monitor extends Readable {
     }
 
     debug(`rate: ${this.#options.hz} samples per second`);
-    debug(`collecting handles? ${this.#options.handles ? 'yes' : 'no'}`)
+    debug(`collecting handles? ${this.#options.handles ? 'yes' : 'no'}`);
   }
 
   _cpupct () {

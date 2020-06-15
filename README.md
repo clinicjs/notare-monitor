@@ -10,7 +10,7 @@ various Node.js performance metrics.
 const { Monitor } = require('notare-monitor');
 const { pipeline, Writable } = require('stream');
 
-const myWritable extends Writable {
+class myWritable extends Writable {
   constructor() {
     super({ objectMode: true });
   }

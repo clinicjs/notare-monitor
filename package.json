@@ -1,6 +1,6 @@
 {
   "name": "notare-monitor",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Node.js Performance Observer - Monitor module",
   "keywords": [
     "performance",
@@ -57,6 +57,6 @@
   },
   "dependencies": {
     "debug": "^4.3.1",
-    "readable-stream": "^3.6.9"
+    "readable-stream": "^3.6.0"
   }
 }

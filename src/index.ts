@@ -1,4 +1,4 @@
-import { Readable } from 'readable-stream';
+import { Readable } from 'stream';
 import { threadId, isMainThread } from 'worker_threads';
 import * as os from 'os';
 import {

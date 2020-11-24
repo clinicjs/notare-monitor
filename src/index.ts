@@ -7,7 +7,8 @@ import {
   performance,
   PerformanceObserver,
   PerformanceObserverEntryList,
-  PerformanceEntry
+  PerformanceEntry,
+  constants
 } from 'perf_hooks';
 import {
   Sample,
@@ -22,6 +23,13 @@ import Histogram from 'native-hdr-histogram';
 import debuglog from 'debug';
 
 const debug = debuglog('notare');
+
+const {
+  NODE_PERFORMANCE_GC_MAJOR,
+  NODE_PERFORMANCE_GC_MINOR,
+  NODE_PERFORMANCE_GC_INCREMENTAL,
+  NODE_PERFORMANCE_GC_WEAKCB
+} = constants;
 
 interface MonitorOptions {
   hz? : number,
@@ -102,8 +110,8 @@ class HandleTracker {
 class GCTracker {
   #obs : PerformanceObserver;
   #duration: any = new Histogram(1, 10000);
-  #scavenges : number = 0;
-  #sweeps : number = 0;
+  #major : number = 0;
+  #minor : number = 0;
   #incremental : number = 0;
   #weakcbs : number = 0;
 
@@ -114,10 +122,10 @@ class GCTracker {
         entries.forEach((entry : PerformanceEntry) => {
           this.#duration.record(entry.duration);
           switch (entry.kind) {
-            case 0: this.#scavenges++; break;
-            case 1: this.#sweeps++; break;
-            case 2: this.#incremental++; break;
-            case 3: this.#weakcbs++; break;
+            case NODE_PERFORMANCE_GC_MAJOR: this.#major++; break;
+            case NODE_PERFORMANCE_GC_MINOR: this.#minor++; break;
+            case NODE_PERFORMANCE_GC_INCREMENTAL: this.#incremental++; break;
+            case NODE_PERFORMANCE_GC_WEAKCB: this.#weakcbs++; break;
           }
         });
       });
@@ -127,8 +135,8 @@ class GCTracker {
 
   get sample () : GCSample {
     return {
-      scavenges: this.#scavenges,
-      sweeps: this.#sweeps,
+      major: this.#major,
+      minor: this.#minor,
       incremental: this.#incremental,
       weakcbs: this.#weakcbs,
       duration: {

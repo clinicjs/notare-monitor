@@ -57,8 +57,8 @@ export interface LoopUtilizationSample {
 
 export interface GCSample {
   duration: HistogramSample,
-  scavenges: number,
-  sweeps: number,
+  major: number,
+  minor: number,
   incremental: number,
   weakcbs: number
 }

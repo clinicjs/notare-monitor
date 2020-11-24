@@ -172,6 +172,7 @@ export class Monitor extends Readable {
   #lastCPUUsage? : NodeJS.CpuUsage;
   #handles? : HandleTracker;
   #gc? : GCTracker;
+  #util : any = new Histogram(1, 100);
 
   constructor (options : MonitorOptions = {}) {
     super({
@@ -233,12 +234,34 @@ export class Monitor extends Readable {
     const cpus = os.cpus();
     const loadAvg = os.loadavg();
 
-    let idle, active, utilization;
+    let idle, active, utilization, histogram : any;
     if (typeof (performance as any).eventLoopUtilization === 'function') {
       const util = (performance as any).eventLoopUtilization();
       idle = util.idle;
       active = util.active;
       utilization = util.utilization;
+      this.#util.record(util.utilization * 100);
+      histogram = {
+        min: this.#util.min(),
+        max: this.#util.max(),
+        mean: this.#util.mean(),
+        stddev: this.#util.stddev(),
+        p0_001: this.#util.percentile(0.001),
+        p0_01: this.#util.percentile(0.01),
+        p0_1: this.#util.percentile(0.1),
+        p1: this.#util.percentile(1),
+        p2_5: this.#util.percentile(2.5),
+        p10: this.#util.percentile(10),
+        p25: this.#util.percentile(25),
+        p50: this.#util.percentile(50),
+        p75: this.#util.percentile(75),
+        p90: this.#util.percentile(90),
+        p97_5: this.#util.percentile(97.5),
+        p99: this.#util.percentile(99),
+        p99_9: this.#util.percentile(99.9),
+        p99_99: this.#util.percentile(99.99),
+        p99_999: this.#util.percentile(99.999)
+      };
     }
 
     const sample : Sample = {
@@ -275,7 +298,8 @@ export class Monitor extends Readable {
       loopUtilization: {
         idle,
         active,
-        utilization
+        utilization,
+        histogram
       }
     };
 

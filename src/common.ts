@@ -53,6 +53,7 @@ export interface LoopUtilizationSample {
   idle: number,
   active: number,
   utilization: number,
+  histogram: HistogramSample
 }
 
 export interface GCSample {

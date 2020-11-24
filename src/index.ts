@@ -1,7 +1,11 @@
 import { Readable } from 'readable-stream';
-import { threadId } from 'worker_threads';
+import { threadId, isMainThread } from 'worker_threads';
 import * as os from 'os';
-import { monitorEventLoopDelay, EventLoopDelayMonitor } from 'perf_hooks';
+import {
+  monitorEventLoopDelay,
+  EventLoopDelayMonitor,
+  performance
+} from 'perf_hooks';
 import { Sample, CpuSample, HandlesSample } from './common';
 import { createHook, AsyncHook } from 'async_hooks';
 import { version } from '../package.json';
@@ -147,9 +151,18 @@ export class Monitor extends Readable {
     const cpus = os.cpus();
     const loadAvg = os.loadavg();
 
+    let idle, active, utilization;
+    if (typeof (performance as any).eventLoopUtilization === 'function') {
+      const util = (performance as any).eventLoopUtilization();
+      idle = util.idle;
+      active = util.active;
+      utilization = util.utilization;
+    }
+
     const sample : Sample = {
       pid: process.pid,
       threadId,
+      isMainThread,
       memory: {
         arrayBuffers: memory.arrayBuffers,
         external: memory.external,
@@ -174,11 +187,19 @@ export class Monitor extends Readable {
         a5: loadAvg[1],
         a15: loadAvg[2]
       },
-      eventLoop: undefined
+      eventLoop: undefined,
+      handles: undefined,
+      loopUtilization: {
+        idle,
+        active,
+        utilization
+      }
     };
+
     if (this.#handles !== undefined) {
       sample.handles = this.#handles.counts;
     }
+
     if (this.#elmonitor !== undefined) {
       sample.eventLoop = {
         min: this.#elmonitor.min,

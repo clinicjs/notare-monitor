@@ -49,13 +49,21 @@ export interface HandlesSample {
   data: number[]
 }
 
+export interface LoopUtilizationSample {
+  idle: number,
+  active: number,
+  utilization: number,
+}
+
 export interface Sample {
   pid : number,
   threadId : number,
+  isMainThread : boolean,
   memory : MemorySample,
   cpu : number,
   cpus : CpuSample[],
   loadAvg: LoadAvgSample,
   eventLoop? : HistogramSample,
-  handles?: HandlesSample
+  handles?: HandlesSample,
+  loopUtilization?: LoopUtilizationSample
 }

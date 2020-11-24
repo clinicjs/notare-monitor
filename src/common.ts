@@ -55,6 +55,14 @@ export interface LoopUtilizationSample {
   utilization: number,
 }
 
+export interface GCSample {
+  duration: HistogramSample,
+  scavenges: number,
+  sweeps: number,
+  incremental: number,
+  weakcbs: number
+}
+
 export interface Sample {
   pid : number,
   threadId : number,
@@ -65,5 +73,6 @@ export interface Sample {
   loadAvg: LoadAvgSample,
   eventLoop? : HistogramSample,
   handles?: HandlesSample,
-  loopUtilization?: LoopUtilizationSample
+  loopUtilization?: LoopUtilizationSample,
+  gc?: GCSample
 }

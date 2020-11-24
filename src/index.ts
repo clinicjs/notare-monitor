@@ -4,11 +4,20 @@ import * as os from 'os';
 import {
   monitorEventLoopDelay,
   EventLoopDelayMonitor,
-  performance
+  performance,
+  PerformanceObserver,
+  PerformanceObserverEntryList,
+  PerformanceEntry
 } from 'perf_hooks';
-import { Sample, CpuSample, HandlesSample } from './common';
+import {
+  Sample,
+  CpuSample,
+  HandlesSample,
+  GCSample
+} from './common';
 import { createHook, AsyncHook } from 'async_hooks';
 import { version } from '../package.json';
+import Histogram from 'native-hdr-histogram';
 
 import debuglog from 'debug';
 
@@ -16,17 +25,20 @@ const debug = debuglog('notare');
 
 interface MonitorOptions {
   hz? : number,
-  handles? : boolean
+  handles? : boolean,
+  gc? : boolean
 }
 
 interface FilledMonitorOptions extends MonitorOptions {
   hz : number,
-  handles : boolean
+  handles : boolean,
+  gc: boolean
 }
 
 const kDefaultMonitorOptions : FilledMonitorOptions = {
   hz: parseInt(process.env.NOTARE_HZ || '0') || 2,
-  handles: process.env.NOTARE_HANDLES === '1'
+  handles: process.env.NOTARE_HANDLES === '1',
+  gc: process.env.NOTARE_GC === '1'
 };
 
 type DestroyCallback = (err? : any) => void;
@@ -87,6 +99,63 @@ class HandleTracker {
   }
 }
 
+class GCTracker {
+  #obs : PerformanceObserver;
+  #duration: any = new Histogram(1, 10000);
+  #scavenges : number = 0;
+  #sweeps : number = 0;
+  #incremental : number = 0;
+  #weakcbs : number = 0;
+
+  constructor () {
+    this.#obs = new PerformanceObserver(
+      (list : PerformanceObserverEntryList) => {
+        const entries = list.getEntries();
+        entries.forEach((entry : PerformanceEntry) => {
+          this.#duration.record(entry.duration);
+          switch (entry.kind) {
+            case 0: this.#scavenges++; break;
+            case 1: this.#sweeps++; break;
+            case 2: this.#incremental++; break;
+            case 3: this.#weakcbs++; break;
+          }
+        });
+      });
+
+    this.#obs.observe({ entryTypes: ['gc'] });
+  }
+
+  get sample () : GCSample {
+    return {
+      scavenges: this.#scavenges,
+      sweeps: this.#sweeps,
+      incremental: this.#incremental,
+      weakcbs: this.#weakcbs,
+      duration: {
+        min: this.#duration.min,
+        max: this.#duration.max,
+        mean: this.#duration.mean,
+        stddev: this.#duration.stddev,
+        p0_001: this.#duration.percentile(0.001),
+        p0_01: this.#duration.percentile(0.01),
+        p0_1: this.#duration.percentile(0.1),
+        p1: this.#duration.percentile(1),
+        p2_5: this.#duration.percentile(2.5),
+        p10: this.#duration.percentile(10),
+        p25: this.#duration.percentile(25),
+        p50: this.#duration.percentile(50),
+        p75: this.#duration.percentile(75),
+        p90: this.#duration.percentile(90),
+        p97_5: this.#duration.percentile(97.5),
+        p99: this.#duration.percentile(99),
+        p99_9: this.#duration.percentile(99.9),
+        p99_99: this.#duration.percentile(99.99),
+        p99_999: this.#duration.percentile(99.999)
+      }
+    } as GCSample;
+  }
+}
+
 export class Monitor extends Readable {
   #options : MonitorOptions;
   #timer : any;
@@ -94,6 +163,7 @@ export class Monitor extends Readable {
   #lastTS : bigint;
   #lastCPUUsage? : NodeJS.CpuUsage;
   #handles? : HandleTracker;
+  #gc? : GCTracker;
 
   constructor (options : MonitorOptions = {}) {
     super({
@@ -131,6 +201,10 @@ export class Monitor extends Readable {
 
     if (this.#options.handles) {
       this.#handles = new HandleTracker();
+    }
+
+    if (this.#options.gc) {
+      this.#gc = new GCTracker();
     }
 
     debug(`rate: ${this.#options.hz} samples per second`);
@@ -189,6 +263,7 @@ export class Monitor extends Readable {
       },
       eventLoop: undefined,
       handles: undefined,
+      gc: undefined,
       loopUtilization: {
         idle,
         active,
@@ -222,6 +297,10 @@ export class Monitor extends Readable {
         p99_99: this.#elmonitor.percentile(99.99),
         p99_999: this.#elmonitor.percentile(99.999)
       };
+    }
+
+    if (this.#gc !== undefined) {
+      sample.gc = this.#gc.sample;
     }
 
     this.push(sample);

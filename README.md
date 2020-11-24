@@ -46,6 +46,11 @@ Create a new `'Monitor` object.
     a measurable performance impact on the Node.js process so it is off
     by default. Setting the `NOTARE_HANDLES` environment variable to `1`
     may also be used to set this value.
+  * `gc`: (`boolean`) When true, the `Monitor` will track and report on
+    garbage collection counts and durations. Enabling this has a
+    measurable performance impact on the Node.js process so it is off
+    by default. Setting the `NOTARE_GC` environment variable to `1`
+    may also be used to set this value.
 
 The `Monitor` object extends from Node.js [`stream.Readable`][].
 
@@ -54,5 +59,7 @@ The `Monitor` object extends from Node.js [`stream.Readable`][].
 * `NOTARE_HZ=n` where `n` is the number of samples per second (default `2`)
 * `NOTARE_HANDLES=1` instructs notare to monitor async hook handle counts
   (disabled by default)
+* `NOTARE_GZ=1` instructs notare to monitor garbage collection (disabled
+  by default)
 
 [`stream.Readable`]: https://nodejs.org/dist/latest-v14.x/docs/api/stream.html#stream_readable_streams
